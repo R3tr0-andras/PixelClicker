@@ -7,6 +7,7 @@ public class Click : MonoBehaviour
 {
     public int score = 0;
     public TextMeshProUGUI scoreText;
+    public int increment = 1;
 
     public void Start()
     {
@@ -15,7 +16,13 @@ public class Click : MonoBehaviour
 
     public void OnClickButton()
     {
-        score++;
+        AddClickCount(increment);
+        
+    }
+
+    public void AddClickCount(int increment)
+    {
+        score += increment;
         UpdateScoreText();
     }
 
