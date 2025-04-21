@@ -1,87 +1,137 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Upgrade : MonoBehaviour
 {
-
-    // SCRIPTS
+    [Header("Scripts")]
     public Click clickScript;
 
-    // ATTRIBUTES
-    public string name;
-
-    public int numberOfUpgrades;
-    public int price;
-    public float multiplier;
+    [Header("Attributes")]
+    public string _name;
+    public int _Upgrade;
+    public int _unlockPrice;
+    public int _price;
+    public float _multiplierFactor = 1.5f;
 
     [Header("Automated")]
-    public bool isAutomated = true;
-    public int autoIncrement = 0;
-    public int incrementBonus; // Nombre ajouté à l'autoIncrement lors de l'amélioration
+    public bool _isUnlocked = false;
+    public bool _isAutomated = true;
+    public float _autoIncrement = 0;
 
-    // GUI
-    private TextMeshProUGUI buttonText;
-    private TextMeshProUGUI buttonCPS;
+    [Header("GUI")]
+    public TextMeshProUGUI _nameTextMesh;
+    public TextMeshProUGUI _lvlTextMesh;
+    public TextMeshProUGUI _priceTextMesh;
+    public TextMeshProUGUI _CPSTextMesh;
+    public GameObject actionButton; 
+    private Button buttonComponent; 
 
-    // Start is called before the first frame update
+    private float _timer;
+
     void Start()
     {
-        buttonText = transform.GetChild(0).GetComponent<TextMeshProUGUI>();
-
-        if (isAutomated) { buttonCPS = transform.GetChild(1).GetComponent<TextMeshProUGUI>(); }
-        numberOfUpgrades = 0;
-        UpdateText();
-        
+        buttonComponent = actionButton.GetComponent<Button>();
+        UpdateUI();
+        UpdateButtonState(); 
     }
 
-    public void UpdateText()
+    void Update()
     {
-        buttonText.text = name + " (" + numberOfUpgrades + ")\nPrice: " + price;
-        if (isAutomated) { buttonCPS.text = autoIncrement + " CPS"; }
-        clickScript.UpdateScoreText();
+        if (_isUnlocked && _isAutomated)
+        {
+            _timer += Time.deltaTime;
+            if (_timer >= 1f)
+            {
+                clickScript.AddScore(_autoIncrement); 
+                _timer = 0f;
+            }
+        }
+        UpdateButtonState(); 
     }
-    public virtual void Click()
+
+    private void UpdateButtonState()
     {
-        if (!(clickScript.score >= price)) return;
-
-        clickScript.score -= price; // Soustrait le prix du score
-        numberOfUpgrades++; // Augmente le nombre de cet upgrade
-        price = (int)MathF.Round(price*multiplier); // Actualise le prix (prix * multipier) arroundi
-        
-        // Not Automated
-        if (!isAutomated)
+        if (!_isUnlocked)
         {
-            clickScript.increment++; // Augmente l'incrément par click
-            UpdateText();
-            return;
+            actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Unlock: " + _unlockPrice;
+            actionButton.SetActive(true); 
+            buttonComponent.interactable = clickScript.GetScore() >= _unlockPrice;
+
+            if (clickScript.GetScore() < _unlockPrice)
+            {
+                buttonComponent.GetComponent<Image>().color = Color.red; // Change la couleur en rouge
+            }
+            else
+            {
+                buttonComponent.GetComponent<Image>().color = Color.white; // Rétablir la couleur normale
+            }
         }
-        
-        // Automated
-        if(autoIncrement == 0)
+        else
         {
-            StartCoroutine(AutomatedClick());
+            actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Upgrade: " + _price;
+            actionButton.SetActive(true); 
+
+            if (_Upgrade >= 20)
+            {
+                buttonComponent.interactable = false; // Désactive l'interaction
+                buttonComponent.GetComponent<Image>().color = Color.yellow; // Change la couleur en jaune
+                _priceTextMesh.text =""; // Enlevé le prix
+            }
+            else
+            {
+                buttonComponent.interactable = clickScript.GetScore() >= _price;
+
+                if (clickScript.GetScore() < _price)
+                {
+                    buttonComponent.GetComponent<Image>().color = Color.red; // Change la couleur en rouge
+                }
+                else
+                {
+                    buttonComponent.GetComponent<Image>().color = Color.white; // Rétablir la couleur normale
+                }
+            }
         }
-        autoIncrement += incrementBonus;
-
-        UpdateText();
-        return;
-
     }
-
-    IEnumerator AutomatedClick()
+    public void OnActionButtonClick()
     {
-        while (true)
+        if (!_isUnlocked && clickScript.GetScore() >= _unlockPrice)
         {
-            Debug.Log(autoIncrement);
-            yield return new WaitForSeconds(1);
-            clickScript.score += autoIncrement;
-            clickScript.UpdateScoreText();
+            TryUnlock();
         }
-
+        else if (_isUnlocked && clickScript.GetScore() >= _price && _Upgrade < 20)
+        {
+            TryUpgrade();
+        }
+    }
+    public void TryUnlock()
+    {
+        clickScript.RemoveScore(_unlockPrice);
+        _isUnlocked = true;
+        _Upgrade = 1;
+        UpdateUI();
+    }
+    public void TryUpgrade()
+    {
+        clickScript.RemoveScore(_price);
+        _Upgrade++;
+        _autoIncrement += CalculateAutoIncrement();
+        _price = Mathf.RoundToInt(_price * _multiplierFactor);
+        clickScript.AddClickCount(1);
+        UpdateUI();
     }
 
+    private float CalculateAutoIncrement()
+    {
+        return 1f;
+    }
+
+    private void UpdateUI()
+    {
+        _nameTextMesh.text = _name;
+        _lvlTextMesh.text = "lvl : " + _Upgrade;
+        _priceTextMesh.text = "Price : " + _price;
+        _CPSTextMesh.text = "CPS : " + Mathf.RoundToInt(_autoIncrement).ToString();
+    }
 }

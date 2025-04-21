@@ -5,10 +5,10 @@ using UnityEngine;
 public class Upgrade2 : Upgrade
 {
 
-    public override void Click()
-    {
-        if (!(clickScript.score >= price)) return;
+    //public override void Click()
+    //{
+    //    if (!(clickScript.score >= price)) return;
 
-    }
+    //}
 
 }
