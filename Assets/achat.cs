@@ -1,51 +1,62 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class achat : MonoBehaviour
 {
-    [Header("Scripts")]
-    [SerializeField] private CursorChangerScript _cursorScript;
+    [Header("Références")]
+    public Click clickScript;
 
-    [Header("L'amélioration est-elle déjà acheté ?\n")]
-    [SerializeField] private bool _isBought;
+    [Header("Données de l'amélioration")]
+    public int unlockPrice = 100;
+    public float clickPowerBonus = 2f;
 
-    [Header("L'amélioration change-t-elle le curseur ?\n")]
-    [SerializeField] private bool _cursorChanger;
-    [SerializeField] private uint _lvlCursor;
+    [Header("UI")]
+    public TextMeshProUGUI priceText;
+    public Button unlockButton;
+    public GameObject panelToHide; // Le GameObject à désactiver après achat (bouton, UI, etc.)
 
-    [Header("Textures")]
-    [SerializeField] public Texture2D _item;
-    [SerializeField] public Texture2D _bought;
-    [SerializeField] public Texture2D _sold;
+    private bool isUnlocked = false;
 
     void Start()
     {
-        InitializeComponents();
+        UpdateUI();
     }
 
     void Update()
     {
-        
-    }
-    public void OnClickButton()
-    {
-        if(_cursorChanger)
+        if (!isUnlocked)
         {
-            _cursorScript.ChangeCursor(_lvlCursor);
+            unlockButton.interactable = clickScript.GetScore() >= unlockPrice;
+            unlockButton.GetComponent<Image>().color = unlockButton.interactable ? Color.white : Color.red;
         }
-        
     }
-    void InitializeComponents()
-    {
-        if (_item != null && _bought != null && _sold != null)
-        {
-            return;
-        } else
-        {
-            Debug.Log("qqch est vide ici");
-            return;
-        }
 
+    public void OnUnlockClick()
+    {
+        if (isUnlocked) return;
+
+        if (clickScript.GetScore() >= unlockPrice)
+        {
+            clickScript.RemoveScore(unlockPrice);
+            clickScript.AddClickPower(clickPowerBonus);
+
+            isUnlocked = true;
+
+            // Cache l'objet (désactive le panneau ou le bouton)
+            if (panelToHide != null)
+                panelToHide.SetActive(false);
+        }
+    }
+
+    void UpdateUI()
+    {
+        if (priceText != null)
+        {
+            priceText.text = "Unlock: " + unlockPrice;
+        }
     }
 }

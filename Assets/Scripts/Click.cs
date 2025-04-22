@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Click : MonoBehaviour
 {
-    public int score = 0;
+    public float score = 0;
     public TextMeshProUGUI scoreText;
     public int increment = 1;
 
@@ -38,7 +38,7 @@ public class Click : MonoBehaviour
         UpdateScoreText();
     }
 
-    public int GetScore()
+    public float GetScore()
     {
         return score;
     }
@@ -47,4 +47,9 @@ public class Click : MonoBehaviour
     {
         scoreText.text = "Score : " + score.ToString();
     }
+    public void AddClickPower(float amount)
+    {
+        increment += Mathf.RoundToInt(amount);
+    }
+
 }
